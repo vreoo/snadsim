@@ -17,12 +17,7 @@ int grid[GRID_HEIGHT][GRID_WIDTH];
 
 int isEmpty(int y, int x) {
     if (y < 0 || y >= GRID_HEIGHT || x < 0 || x >= GRID_WIDTH)
-        return 0;  // outside grid is not empty
-
-    for (int dy = 0; dy < WALL_THICK; dy++)
-        for (int dx = 0; dx < WALL_THICK; dx++)
-            if (y+dy < GRID_HEIGHT && x+dx < GRID_WIDTH && grid[y+dy][x+dx] == WALL)
-                return 0;
+        return 0;
     return grid[y][x] == EMPTY || grid[y][x] == WATER;
 }
 
@@ -66,33 +61,67 @@ int main(void) {
         for (int x = 0; x < GRID_WIDTH; x++) {
             grid[y][x] = 0;
         }
-    }    
+    }
+
+    bool mouseDown = false;
+    int mouseX = -1, mouseY = -1;
 
     while (running) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
+            
+            if (event.type == SDL_MOUSEBUTTONDOWN) {
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    mouseDown = true;
+                    mouseX = event.button.x / CELL_SIZE;
+                    mouseY = event.button.y / CELL_SIZE;
+                }
+            }
+            if (event.type == SDL_MOUSEBUTTONUP) {
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    mouseDown = false;
+                }
+            }
+
+            // Track movement (for walls)
+            if (event.type == SDL_MOUSEMOTION) {
+                mouseX = event.motion.x / CELL_SIZE;
+                mouseY = event.motion.y / CELL_SIZE;
+            }
+
             if (event.type == SDL_MOUSEMOTION &&
                 (event.motion.state & SDL_BUTTON_LMASK)) {
             
                 int mx = event.motion.x / CELL_SIZE;
                 int my = event.motion.y / CELL_SIZE;
             
-                if (mx >= 0 && mx < GRID_WIDTH &&
-                    my >= 0 && my < GRID_HEIGHT) {
+                if (mouseDown && mx >= 0 && mx < GRID_WIDTH && my >= 0 && my < GRID_HEIGHT) {
+                    SDL_Keymod mods = SDL_GetModState();
             
-                        SDL_Keymod mods = SDL_GetModState();
-
-                        for (int dy = -1; dy <= 1; dy++)
-                            for (int dx = -1; dx <= 1; dx++)
-                                if (mx+dx >= 0 && mx+dx < GRID_WIDTH && my+dy >=0 && my+dy < GRID_HEIGHT)
-                                    if (!(mods & KMOD_SHIFT) || grid[my+dy][mx+dx] != WALL)
-                                        grid[my+dy][mx+dx] = mods & KMOD_SHIFT ? WALL :
-                                                              mods & KMOD_GUI ? WATER :
-                                                              mods & KMOD_ALT ? EMPTY : SAND;
+                    int placeType;
+                    if (mods & KMOD_SHIFT) placeType = WALL;
+                    else if (mods & KMOD_GUI) placeType = WATER;
+                    else if (mods & KMOD_ALT) placeType = EMPTY;
+                    else placeType = SAND;
+            
+                    // Fill WALL_THICK x WALL_THICK area for walls
+                    for (int dy = 0; dy < WALL_THICK; dy++) {
+                        for (int dx = 0; dx < WALL_THICK; dx++) {
+                            int nx = my + dy;
+                            int ny = mx + dx;
+                            if (nx < GRID_HEIGHT && ny < GRID_WIDTH)
+                                // Prevent overwriting WALL
+                                if (placeType != WALL && grid[nx][ny] == WALL) {
+                                    continue; // skip
+                                }
+                                grid[nx][ny] = placeType;
+                        }
+                    }
                 }
             }
+            
         }
 
         for (int y = GRID_HEIGHT - 2; y >= 0; y--) {
@@ -186,18 +215,14 @@ int main(void) {
                 }
 
                 if (grid[y][x] == WALL) {
-                    for (int dy = 0; dy < 2; dy++) {
-                        for (int dx = 0; dx < 2; dx++) {
-                            SDL_Rect cell = {
-                                x * CELL_SIZE + dx,
-                                y * CELL_SIZE + dy,
-                                CELL_SIZE,
-                                CELL_SIZE
-                            };
-                            SDL_SetRenderDrawColor(renderer, 120, 120, 120, 255);
-                            SDL_RenderFillRect(renderer, &cell);
-                        }
-                    }
+                    SDL_Rect cell = {
+                        x * CELL_SIZE,
+                        y * CELL_SIZE,
+                        CELL_SIZE,
+                        CELL_SIZE
+                    };
+                    SDL_SetRenderDrawColor(renderer, 120, 120, 120, 255);
+                    SDL_RenderFillRect(renderer, &cell);
                 }
                 
                 if (grid[y][x] == WATER) {
