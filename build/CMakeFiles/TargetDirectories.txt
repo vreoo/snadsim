@@ -1,0 +1,3 @@
+/Users/nibrasshami/development/Sand Sim/build/CMakeFiles/falling_sand.dir
+/Users/nibrasshami/development/Sand Sim/build/CMakeFiles/edit_cache.dir
+/Users/nibrasshami/development/Sand Sim/build/CMakeFiles/rebuild_cache.dir
