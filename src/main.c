@@ -64,7 +64,6 @@ int main(void) {
     }
 
     bool mouseDown = false;
-    int mouseX = -1, mouseY = -1;
 
     while (running) {
         while (SDL_PollEvent(&event)) {
@@ -75,20 +74,12 @@ int main(void) {
             if (event.type == SDL_MOUSEBUTTONDOWN) {
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     mouseDown = true;
-                    mouseX = event.button.x / CELL_SIZE;
-                    mouseY = event.button.y / CELL_SIZE;
                 }
             }
             if (event.type == SDL_MOUSEBUTTONUP) {
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     mouseDown = false;
                 }
-            }
-
-            // Track movement (for walls)
-            if (event.type == SDL_MOUSEMOTION) {
-                mouseX = event.motion.x / CELL_SIZE;
-                mouseY = event.motion.y / CELL_SIZE;
             }
 
             if (event.type == SDL_MOUSEMOTION &&
