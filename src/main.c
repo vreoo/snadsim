@@ -37,7 +37,8 @@ int main(void) {
         "Falling Sand",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        800, 600,
+        GRID_WIDTH * CELL_SIZE,   // 200*4 = 800
+        GRID_HEIGHT * CELL_SIZE,  // 100*4 = 400
         SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP
     );
 
@@ -155,7 +156,7 @@ int main(void) {
                             int nx = x + dirs[i];
                             if (nx >= 0 && nx < GRID_WIDTH &&
                                 grid[y][nx] == EMPTY &&
-                                grid[y + 1][nx] != WALL) {   // optional: don’t flow under wall corners
+                                grid[y + 1][nx] != WALL) { 
                                 grid[y][nx] = WATER;
                                 grid[y][x] = EMPTY;
                                 break;
