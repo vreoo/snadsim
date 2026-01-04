@@ -16,11 +16,14 @@
 int grid[GRID_HEIGHT][GRID_WIDTH];
 
 int isEmpty(int y, int x) {
+    if (y < 0 || y >= GRID_HEIGHT || x < 0 || x >= GRID_WIDTH)
+        return 0;  // outside grid is not empty
+
     for (int dy = 0; dy < WALL_THICK; dy++)
         for (int dx = 0; dx < WALL_THICK; dx++)
-            if (y+dy < GRID_HEIGHT && x+dx < GRID_WIDTH && grid[y+dy][x+dx]==WALL)
+            if (y+dy < GRID_HEIGHT && x+dx < GRID_WIDTH && grid[y+dy][x+dx] == WALL)
                 return 0;
-    return 1;
+    return grid[y][x] == EMPTY || grid[y][x] == WATER;
 }
 
 int main(void) {
@@ -78,20 +81,15 @@ int main(void) {
                 if (mx >= 0 && mx < GRID_WIDTH &&
                     my >= 0 && my < GRID_HEIGHT) {
             
-                    SDL_Keymod mods = SDL_GetModState();
-            
-                    if (mods & KMOD_SHIFT) {
-                        grid[my][mx] = WALL;
-                    }
-                    else if (mods & KMOD_GUI) { // Command key on macOS
-                        grid[my][mx] = WATER;
-                    }
-                    else if (mods & KMOD_ALT) {
-                        grid[my][mx] = EMPTY;
-                    }
-                    else {
-                        grid[my][mx] = SAND;
-                    }
+                        SDL_Keymod mods = SDL_GetModState();
+
+                        for (int dy = -1; dy <= 1; dy++)
+                            for (int dx = -1; dx <= 1; dx++)
+                                if (mx+dx >= 0 && mx+dx < GRID_WIDTH && my+dy >=0 && my+dy < GRID_HEIGHT)
+                                    if (!(mods & KMOD_SHIFT) || grid[my+dy][mx+dx] != WALL)
+                                        grid[my+dy][mx+dx] = mods & KMOD_SHIFT ? WALL :
+                                                              mods & KMOD_GUI ? WATER :
+                                                              mods & KMOD_ALT ? EMPTY : SAND;
                 }
             }
         }
@@ -100,7 +98,7 @@ int main(void) {
             for (int x = 0; x < GRID_WIDTH; x++) {    
                 if (grid[y][x] == SAND) {
                     // Fall straight down if empty or water
-                    if (grid[y + 1][x] == EMPTY || grid[y + 1][x] == WATER) {
+                    if (isEmpty(y + 1, x)) {
                         // If water below, swap sand and water
                         if (grid[y + 1][x] == WATER) {
                             grid[y + 1][x] = SAND;
@@ -118,7 +116,7 @@ int main(void) {
                         // first direction
                         if (x + dx1 >= 0 && x + dx1 < GRID_WIDTH &&
                             (grid[y + 1][x + dx1] == EMPTY || grid[y + 1][x + dx1] == WATER) &&
-                            (grid[y][x + dx1] == EMPTY)) {   // <-- only move diagonally if side cell is empty
+                            (isEmpty(y, x + dx1))) {
                             if (grid[y + 1][x + dx1] == WATER) {
                                 grid[y + 1][x + dx1] = SAND;
                                 grid[y][x] = WATER;
